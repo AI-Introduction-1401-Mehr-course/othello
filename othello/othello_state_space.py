@@ -116,3 +116,15 @@ class OthelloStateSpace(StateSpace):
 
     def is_goal(self) -> bool:
         return not self.action()
+
+    @property
+    def playing_side(self):
+        return self.state.player_turn
+
+    @property
+    def value(self) -> Dict[Side, int]:
+        ans = defaultdict(lambda: 0)
+        for i in range(self.n):
+            for j in range(self.n):
+                ans[self.state.board[i][j]] += 1
+        return {i: ans[i] for i in Side}
