@@ -1,8 +1,9 @@
+from collections import defaultdict
 from copy import deepcopy
 from enum import IntEnum
 from itertools import product, filterfalse
 from abstracts import StateSpace
-from safe_typing import NamedTuple, Self, List
+from safe_typing import NamedTuple, Self, List, Dict, Tuple
 
 
 class Cell(IntEnum):
@@ -47,6 +48,10 @@ class OthelloStateSpace(StateSpace):
 
         return cls(cls.State(board, Side.DARK))
 
+    @classmethod
+    def inbound(cls, cell: Tuple[int, int]) -> bool:
+        return cell[0] < cls.n and cell[1] < cls.n and 0 <= cell[0] and 0 <= cell[1]
+
     state: State
 
     def __init__(self, state: State):
@@ -61,13 +66,7 @@ class OthelloStateSpace(StateSpace):
             for i in range(1, self.n):
                 x = action.x + direction[0] * i
                 y = action.y + direction[1] * i
-                if (
-                    x >= self.n
-                    or y >= self.n
-                    or x < 0
-                    or y < 0
-                    or new_board[x][y] == Cell.EMPTY
-                ):
+                if not self.inbound((x, y)) or new_board[x][y] == Cell.EMPTY:
                     break
                 if new_board[x][y] == cell_status:
                     for j in range(i, 0, -1):
@@ -75,12 +74,15 @@ class OthelloStateSpace(StateSpace):
                         y = action.y + direction[1] * j
                         new_board[x][y] = cell_status
                     break
-
-        return OthelloStateSpace(self.State(new_board, self.state.player_turn.other))
+        ans = OthelloStateSpace(self.State(new_board, self.playing_side.other))
+        if ans.action():
+            return OthelloStateSpace(self.State(new_board, self.playing_side.other))
+        else:
+            return OthelloStateSpace(self.State(new_board, self.playing_side))
 
     def action(self) -> List[Action]:
         board = self.state.board
-        player_disk_cell_status = Cell(self.state.player_turn)
+        player_disk_cell_status = Cell(self.playing_side)
 
         ans = set()
         for cell in (
@@ -90,21 +92,26 @@ class OthelloStateSpace(StateSpace):
             if board[x][y] == player_disk_cell_status
         ):
             for direction in self.directions:
-                if board[cell[0] + direction[0]][cell[1] + direction[1]] == Cell(
-                    self.state.player_turn.other
-                ):
+                x = cell[0] + direction[0]
+                y = cell[1] + direction[1]
+                if self.inbound((x, y)) and board[cell[0] + direction[0]][
+                    cell[1] + direction[1]
+                ] == Cell(self.playing_side.other):
                     for i in range(2, self.n):
                         x = cell[0] + direction[0] * i
                         y = cell[1] + direction[1] * i
-                        if board[x][y] == player_disk_cell_status:
+                        if (
+                            not self.inbound((x, y))
+                            or board[x][y] == player_disk_cell_status
+                        ):
                             break
                         if board[x][y] == Cell.EMPTY:
-                            ans.add(self.Action(x, y, self.state.player_turn))
+                            ans.add(self.Action(x, y, self.playing_side))
                             break
 
         return list(ans)
 
-    def cost(self, action: Action) -> int:
+    def cost(self, _) -> int:
         return 1
 
     def is_goal(self) -> bool:
