@@ -1,19 +1,16 @@
 from abc import ABC, abstractmethod
 
-from safe_typing import Callable, List
+from safe_typing import Callable, Dict
 
-from .state_space_abstract import StateSpace
+from .game_abstract import Game
 
 
 class Search(ABC):
     @abstractmethod
-    def __call__(self, state_space: StateSpace) -> List[StateSpace.Action] | None:
+    def __call__(self, game: Game) -> Dict[Game.Player, int]:
         ...
 
 
 class InformedSearch(Search, ABC):
-
-    heuristic: Callable[[StateSpace], float]
-
-    def __init__(self, heuristic) -> None:
-        self.heuristic = heuristic
+    def __init__(self, evaluation: Callable[[Game], Dict[Game.Player, int]]) -> None:
+        self.evaluation = evaluation
