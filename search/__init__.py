@@ -1,1 +1,2 @@
 from .minimax_search import MinimaxSearch
+from .alpha_beta_pruning_search import AlphaBetaPruningSearch
