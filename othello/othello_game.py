@@ -38,19 +38,28 @@ class OthelloGame(Game):
     Action = Play | Pass
 
     class State(Game.State):
-        board: List[List[Cell]]
+        board: Tuple[Tuple[Cell, ...], ...]
         player_turn: Side
 
     @classmethod
     def S0(cls) -> State:
         mid = cls.n // 2
-        board = [[Cell.EMPTY for __ in range(cls.n)] for _ in range(cls.n)]
-        board[mid - 1][mid - 1] = Cell.LIGHT_DISK
-        board[mid - 1][mid] = Cell.DARK_DISK
-        board[mid][mid - 1] = Cell.DARK_DISK
-        board[mid][mid] = Cell.LIGHT_DISK
+        disks: Dict[Tuple[int, int], Cell] = {}
+        disks[mid - 1, mid - 1] = Cell.LIGHT_DISK
+        disks[mid - 1, mid] = Cell.DARK_DISK
+        disks[mid, mid - 1] = Cell.DARK_DISK
+        disks[mid, mid] = Cell.LIGHT_DISK
 
-        return cls.State(board, Side.DARK)
+        return cls.State(
+            tuple(
+                tuple(
+                    disks[i, j] if (i, j) in disks.keys() else Cell.EMPTY
+                    for i in range(cls.n)
+                )
+                for j in range(cls.n)
+            ),
+            Side.DARK,
+        )
 
     @classmethod
     def inbound(cls, cell: Tuple[int, int]) -> bool:
@@ -67,22 +76,29 @@ class OthelloGame(Game):
                 self.State(self.state.board, self.state.player_turn.other)
             )
 
-        new_board = deepcopy(self.state.board)
         cell_status = Cell(action.disk_side)
 
-        new_board[action.x][action.y] = cell_status
+        changes: Dict[Tuple[int, int], Cell] = {}
+        changes[action.x, action.y] = cell_status
         for direction in self.directions:
             for i in range(1, self.n):
                 x = action.x + direction[0] * i
                 y = action.y + direction[1] * i
-                if not self.inbound((x, y)) or new_board[x][y] == Cell.EMPTY:
+                if not self.inbound((x, y)) or self.state.board[x][y] == Cell.EMPTY:
                     break
-                if new_board[x][y] == cell_status:
+                if self.state.board[x][y] == cell_status:
                     for j in range(i, 0, -1):
                         x = action.x + direction[0] * j
                         y = action.y + direction[1] * j
-                        new_board[x][y] = cell_status
+                        changes[x, y] = cell_status
                     break
+        new_board = tuple(
+            tuple(
+                changes[i, j] if (i, j) in changes.keys() else self.state.board[i][j]
+                for i in range(self.n)
+            )
+            for j in range(self.n)
+        )
         return OthelloGame(self.State(new_board, self.state.player_turn.other))
 
     def action(self) -> List[Action]:
