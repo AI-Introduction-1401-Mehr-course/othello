@@ -1,4 +1,3 @@
-from copy import deepcopy
 from enum import IntEnum
 from itertools import filterfalse, product
 from abstracts import Game
@@ -110,7 +109,7 @@ class OthelloGame(Game):
             (x, y)
             for x in range(self.n)
             for y in range(self.n)
-            if board[x][y] == player_disk_cell_status
+            if board[x][y] == Cell.EMPTY
         ):
             for direction in self.directions:
                 x = cell[0] + direction[0]
@@ -121,13 +120,10 @@ class OthelloGame(Game):
                     for i in range(2, self.n):
                         x = cell[0] + direction[0] * i
                         y = cell[1] + direction[1] * i
-                        if (
-                            not self.inbound((x, y))
-                            or board[x][y] == player_disk_cell_status
-                        ):
+                        if not self.inbound((x, y)) or board[x][y] == Cell.EMPTY:
                             break
-                        if board[x][y] == Cell.EMPTY:
-                            ans.add(self.Play(x, y, self.state.player_turn))
+                        if board[x][y] == player_disk_cell_status:
+                            ans.add(self.Play(*cell, self.state.player_turn))
                             break
 
         return list(ans) if ans else [self.Pass()]
