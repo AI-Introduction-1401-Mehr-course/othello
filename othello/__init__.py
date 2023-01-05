@@ -1,1 +1,1 @@
-from .othello_game import OthelloGame
+from .othello_game import OthelloGame, Cell
