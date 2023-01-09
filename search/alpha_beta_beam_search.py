@@ -1,5 +1,5 @@
 from abstracts import Game, InformedSearch
-from safe_typing import Callable, Dict
+from safe_typing import Callable, Dict, Tuple
 import math
 
 class AlphaBetaBeamSearch(InformedSearch):
@@ -10,10 +10,10 @@ class AlphaBetaBeamSearch(InformedSearch):
         self.depth = depth
         self.beam = beam
 
-    def max_value(self, game:Game, a=-math.inf, b=math.inf) -> (int, Game.Action):
+    def max_value(self, game:Game, a=-math.inf, b=math.inf) -> Tuple[int, Game.Action]:
         self.depth += 1
         if game.is_cutoff(self.max_depth, self.depth):
-            return self.evaluation(game)[game.to_move],None
+            return self.evaluation(game)[game.to_move()],None
         v = -math.inf
         act = None
         
@@ -21,7 +21,7 @@ class AlphaBetaBeamSearch(InformedSearch):
         actions = list(map(lambda x:x[0],sorted({action:self.evaluation(game.result(action)) for action in game.action()}.items(),key=lambda x:x[1],reverse=True)))[:self.beam]
 
         for action in actions:
-            v2,a2 = min_value(game,game.result(action),a,b)
+            v2,a2 = self.min_value(game,game.result(action),a,b)
             if v2 > v:
                 v,act = v2,action
                 a = max(a,v)
@@ -30,10 +30,10 @@ class AlphaBetaBeamSearch(InformedSearch):
         return (v,act)
 
 
-    def min_value(self, game:Game, a=-math.inf, b=math.inf) -> (int, Game.Action):
+    def min_value(self, game:Game, a=-math.inf, b=math.inf) -> Tuple[int, Game.Action]:
         self.depth += 1
         if game.is_cutoff(self.max_depth, self.depth):
-            return self.evaluation(game)[game.to_move],None
+            return self.evaluation(game)[game.to_move()],None
         v = math.inf
         act = None
         
@@ -41,7 +41,7 @@ class AlphaBetaBeamSearch(InformedSearch):
         actions = list(map(lambda x:x[0],sorted({action:self.evaluation(game.result(action)) for action in game.action()}.items(),key=lambda x:x[1],reverse=True)))[:self.beam]
 
         for action in actions:
-            v2,a2 = max_value(game,game.result(action),a,b)
+            v2,a2 = self.max_value(game,game.result(action),a,b)
             if v2 < v:
                 v,act = v2,action
                 b = min(b,v)
