@@ -1,13 +1,13 @@
 from abstracts import Search, Game
 from safe_typing import Dict, Callable
-
+from othello.othello_game import OthelloGame
 
 class CuttingoffSearch(Search):
-    def __init__(self,evaluation: Callable[[Game], Dict[Game.Player, int]], depth: int) -> None:
+    def __init__(self,evaluation: Callable[[OthelloGame], Dict[Game.Player, int]], depth: int) -> None:
         super().__init__()
         self.evaluation = evaluation
         self.depth = depth
-    def __call__(self, game: Game, depth:int |None= None) -> Dict[Game.Player, int]:
+    def __call__(self, game: OthelloGame, depth:int |None= None) -> Dict[Game.Player, int]:
         if depth is None:
             depth = self.depth
         if depth == 0 :
