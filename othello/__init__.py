@@ -1,2 +1,3 @@
 from .othello_game import OthelloGame, Cell
 from .evaluation_functions import evaluate_by_material,evaluate_by_mobility_and_material
+from .othello_transposition_table import TranspositionTable, StateUnknown
